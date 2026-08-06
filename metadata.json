@@ -1,0 +1,6 @@
+{
+  "name": "Injector",
+  "description": "Android приложение Injector с системой ключей LootLabs/Lovable, таймером доступа, меню Klogot (ESP, Aim Bot, Misc, Attach) и системой обновлений.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
