@@ -70,32 +70,29 @@ fun CheatControlButtons(
 
             detectedVersionName = installedVersion
 
-            // ALWAYS start Overlay Service so floating avatar menu appears over screen
+            // Start Overlay Service
             val overlayIntent = Intent(context, OverlayService::class.java)
             context.startService(overlayIntent)
 
-            // Auto-attach cheat with detected or default version
             CheatSettingsManager.setDetectedStandoffVersion("StandOff 2 v$installedVersion")
             val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "18492041"
             val shortId = if (androidId.length >= 8) androidId.takeLast(8).uppercase() else "18492041"
             CheatSettingsManager.setAccountId("ID: $shortId")
 
+            // Automatically ATTACH cheat and OPEN MENU
             CheatSettingsManager.startAttachProcess(isInGameOrLobby = true) {}
             CheatSettingsManager.completeAttachSuccess()
+            CheatSettingsManager.setKlogotMenuOpen(true)
 
             if (!isInstalled) {
-                showNotInstalledDialog = true
-                Toast.makeText(context, "Оверлей чита запущен! Игра Standoff 2 не обнаружена.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Чит запущен и меню открыто! (Standoff 2 не найден на телефоне)", Toast.LENGTH_LONG).show()
             } else {
-                // Check if installed version is different/outdated compared to latest 0.39.2 or show update offer
-                if (installedVersion != "0.39.2") {
-                    showNewVersionDialog = true
-                } else {
-                    Toast.makeText(context, "Чит запущен! Переход в Standoff 2...", Toast.LENGTH_SHORT).show()
-                    val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-                    if (launchIntent != null) {
+                Toast.makeText(context, "Чит запущен! Переход в Standoff 2...", Toast.LENGTH_SHORT).show()
+                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                if (launchIntent != null) {
+                    try {
                         context.startActivity(launchIntent)
-                    }
+                    } catch (_: Exception) {}
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.example.data
 
+import android.graphics.RectF
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,8 +10,15 @@ data class CheatState(
     val isAttached: Boolean = false,
     val isAttaching: Boolean = false,
     val standoffVersion: String = "v0.32.1",
-    val accountId: String = "ID: 184920412",
+    val accountId: String = "ID: 18492041",
     val attachErrorMessage: String? = null,
+
+    // Standoff 2 Player Account Connection
+    val standoffPlayerId: String = "18492041",
+    val standoffNickname: String = "CYBER_GHOST",
+    val standoffClan: String = "[PRO]",
+    val standoffLevel: Int = 68,
+    val isAccountConnected: Boolean = true,
 
     // ESP Options
     val espBoxEnabled: Boolean = false,
@@ -44,6 +52,43 @@ object CheatSettingsManager {
     private val _state = MutableStateFlow(CheatState())
     val state: StateFlow<CheatState> = _state.asStateFlow()
 
+    private var floatingLogoRect = RectF(0f, 0f, 0f, 0f)
+    private var menuCardRect = RectF(0f, 0f, 0f, 0f)
+
+    fun updateFloatingLogoBounds(x: Float, y: Float, width: Float, height: Float) {
+        floatingLogoRect = RectF(x, y, x + width, y + height)
+    }
+
+    fun updateMenuCardBounds(x: Float, y: Float, width: Float, height: Float) {
+        menuCardRect = RectF(x, y, x + width, y + height)
+    }
+
+    fun isInteractiveTouchPoint(x: Float, y: Float): Boolean {
+        val currState = _state.value
+        // If logo position hasn't been reported yet, allow touch in default top-left area
+        if (floatingLogoRect.isEmpty) {
+            val fallback = RectF(0f, 100f, 300f, 400f)
+            return fallback.contains(x, y)
+        }
+
+        if (currState.isKlogotMenuOpen) {
+            if (menuCardRect.contains(x, y) || floatingLogoRect.contains(x, y)) {
+                return true
+            }
+        } else {
+            val paddedLogo = RectF(
+                floatingLogoRect.left - 30f,
+                floatingLogoRect.top - 30f,
+                floatingLogoRect.right + 30f,
+                floatingLogoRect.bottom + 30f
+            )
+            if (paddedLogo.contains(x, y)) {
+                return true
+            }
+        }
+        return false
+    }
+
     fun setOverlayActive(active: Boolean) {
         _state.value = _state.value.copy(isOverlayActive = active)
     }
@@ -57,7 +102,30 @@ object CheatSettingsManager {
     }
 
     fun setAccountId(id: String) {
-        _state.value = _state.value.copy(accountId = id)
+        _state.value = _state.value.copy(
+            accountId = if (id.startsWith("ID: ")) id else "ID: $id",
+            standoffPlayerId = id.replace("ID: ", "").trim()
+        )
+    }
+
+    fun connectStandoffAccount(id: String, nickname: String = "STANDOFF_LEGEND") {
+        val cleanId = id.replace("ID: ", "").trim()
+        val numHash = cleanId.filter { it.isDigit() }.takeLast(2).toIntOrNull() ?: 42
+        val level = (30 + numHash % 70)
+        _state.value = _state.value.copy(
+            standoffPlayerId = cleanId,
+            accountId = "ID: $cleanId",
+            standoffNickname = if (nickname.isBlank()) "PLAYER_$cleanId" else nickname,
+            standoffClan = if (cleanId.length % 2 == 0) "[PRO]" else "[APEX]",
+            standoffLevel = level,
+            isAccountConnected = true
+        )
+    }
+
+    fun disconnectStandoffAccount() {
+        _state.value = _state.value.copy(
+            isAccountConnected = false
+        )
     }
 
     // Attach Action

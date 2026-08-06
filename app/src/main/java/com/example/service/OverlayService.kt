@@ -1,11 +1,13 @@
 package com.example.service
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
@@ -23,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -45,6 +49,17 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+
+import android.widget.FrameLayout
+
+class TouchThroughFrameLayout(context: Context) : FrameLayout(context) {
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (!CheatSettingsManager.isInteractiveTouchPoint(ev.x, ev.y)) {
+            return false
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+}
 
 class OverlayService : Service() {
 
@@ -136,8 +151,16 @@ class OverlayService : Service() {
             }
         }
 
-        overlayView = composeView
-        windowManager.addView(composeView, params)
+        val rootLayout = TouchThroughFrameLayout(this).apply {
+            val owner = lifecycleOwner!!
+            setViewTreeLifecycleOwner(owner)
+            setViewTreeViewModelStoreOwner(owner)
+            setViewTreeSavedStateRegistryOwner(owner)
+            addView(composeView)
+        }
+
+        overlayView = rootLayout
+        windowManager.addView(rootLayout, params)
     }
 
     override fun onDestroy() {
@@ -183,6 +206,13 @@ fun FloatingControlView(
                         .size(54.dp)
                         .clip(CircleShape)
                         .border(2.dp, CyberAccent, CircleShape)
+                        .onGloballyPositioned { coordinates ->
+                            val pos = coordinates.positionInWindow()
+                            val size = coordinates.size
+                            CheatSettingsManager.updateFloatingLogoBounds(
+                                pos.x, pos.y, size.width.toFloat(), size.height.toFloat()
+                            )
+                        }
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
                                 change.consume()
@@ -208,10 +238,20 @@ fun FloatingControlView(
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
-                    KlogotMenuView(
-                        cheatState = cheatState,
-                        onCloseClick = onToggleMenu
-                    )
+                    Box(
+                        modifier = Modifier.onGloballyPositioned { coordinates ->
+                            val pos = coordinates.positionInWindow()
+                            val size = coordinates.size
+                            CheatSettingsManager.updateMenuCardBounds(
+                                pos.x, pos.y, size.width.toFloat(), size.height.toFloat()
+                            )
+                        }
+                    ) {
+                        KlogotMenuView(
+                            cheatState = cheatState,
+                            onCloseClick = onToggleMenu
+                        )
+                    }
                 }
             }
         }

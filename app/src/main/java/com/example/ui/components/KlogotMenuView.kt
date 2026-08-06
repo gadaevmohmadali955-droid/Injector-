@@ -142,7 +142,7 @@ fun KlogotMenuView(
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val tabs = listOf("ESP", "AIM BOT", "MISC", "ATTACH")
+                val tabs = listOf("ESP", "AIM", "MISC", "ПРОФИЛЬ", "ATTACH")
                 tabs.forEachIndexed { index, title ->
                     val isSelected = selectedTab == index
                     Box(
@@ -158,7 +158,7 @@ fun KlogotMenuView(
                     ) {
                         Text(
                             text = title,
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = if (isSelected) CyberAccent else DarkTextMuted
                         )
@@ -179,7 +179,8 @@ fun KlogotMenuView(
                     0 -> EspTabContent(cheatState, notAttachedWarning)
                     1 -> AimBotTabContent(cheatState, notAttachedWarning)
                     2 -> MiscTabContent(cheatState, notAttachedWarning)
-                    3 -> AttachTabContent(cheatState)
+                    3 -> ProfileTabContent(cheatState)
+                    4 -> AttachTabContent(cheatState)
                 }
             }
         }
@@ -439,6 +440,169 @@ private fun MiscTabContent(
 }
 
 @Composable
+private fun ProfileTabContent(
+    cheatState: CheatState
+) {
+    val context = LocalContext.current
+    var inputId by remember { mutableStateOf(cheatState.standoffPlayerId) }
+    var inputNick by remember { mutableStateOf(cheatState.standoffNickname) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = "ПРИВЯЗКА АККАУНТА STANDOFF 2",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = CyberAccent
+        )
+
+        // Connected Account Profile Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, CyberAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF141420))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Player Avatar
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF221A38))
+                        .border(2.dp, CyberAccent, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_injector_avatar),
+                        contentDescription = "Player Avatar",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = cheatState.standoffNickname,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(CyberAccent.copy(alpha = 0.2f))
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = cheatState.standoffClan,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = CyberAccent
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "ID: ${cheatState.standoffPlayerId}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = CyberGreen
+                    )
+
+                    Text(
+                        text = "Уровень: ${cheatState.standoffLevel} | Статус: Подключен",
+                        fontSize = 10.sp,
+                        color = DarkTextMuted
+                    )
+                }
+            }
+        }
+
+        // Input Fields to Change Standoff ID or Connect
+        Text(
+            text = "Введите ваш ID в Standoff 2:",
+            fontSize = 11.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Medium
+        )
+
+        OutlinedTextField(
+            value = inputId,
+            onValueChange = { inputId = it },
+            placeholder = { Text("Например: 18492041", color = DarkTextMuted, fontSize = 11.sp) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = CyberAccent,
+                unfocusedBorderColor = Color(0xFF333348),
+                focusedContainerColor = Color(0xFF161622),
+                unfocusedContainerColor = Color(0xFF161622),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            )
+        )
+
+        OutlinedTextField(
+            value = inputNick,
+            onValueChange = { inputNick = it },
+            placeholder = { Text("Никнейм игрока", color = DarkTextMuted, fontSize = 11.sp) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = CyberAccent,
+                unfocusedBorderColor = Color(0xFF333348),
+                focusedContainerColor = Color(0xFF161622),
+                unfocusedContainerColor = Color(0xFF161622),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            )
+        )
+
+        Button(
+            onClick = {
+                if (inputId.isBlank()) {
+                    Toast.makeText(context, "Введите ваш ID Standoff 2!", Toast.LENGTH_SHORT).show()
+                } else {
+                    CheatSettingsManager.connectStandoffAccount(inputId, inputNick)
+                    Toast.makeText(context, "Аккаунт Standoff 2 (ID: $inputId) успешно подключен!", Toast.LENGTH_SHORT).show()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(42.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = CyberAccent),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = Color.Black
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("ПОДКЛЮЧИТЬ АККАУНТ СТАНДОФФ", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        }
+    }
+}
+
+@Composable
 private fun AttachTabContent(
     cheatState: CheatState
 ) {
@@ -618,21 +782,28 @@ private fun AttachTabContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            OutlinedButton(
-                onClick = { CheatSettingsManager.detach() },
+            // Main Stop Cheat & Close Overlay Service Button
+            Button(
+                onClick = {
+                    CheatSettingsManager.detach()
+                    val intent = android.content.Intent(context, com.example.service.OverlayService::class.java)
+                    context.stopService(intent)
+                    Toast.makeText(context, "Чит выключен, оверлей закрыт", Toast.LENGTH_SHORT).show()
+                },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = CyberRed),
+                colors = ButtonDefaults.buttonColors(containerColor = CyberRed),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.PowerSettingsNew,
+                    imageVector = Icons.Default.Cancel,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Отключить (Detach)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("ВЫКЛЮЧИТЬ ЧИТ (ЗАКРЫТЬ OVERLAY)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
